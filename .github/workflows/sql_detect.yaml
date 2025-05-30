@@ -16,7 +16,7 @@ on:
         type: string
         description: channel id (default #ddl_alerting)
         required: false
-        default: C08R2C0SFAT
+        default: C08U0FXMDAQ
 
 jobs:
   SQL-detect:
