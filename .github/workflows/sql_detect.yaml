@@ -21,7 +21,7 @@ on:
 jobs:
   SQL-detect:
     ### if: github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
-    runs-on: ubuntu_latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,6 +32,7 @@ jobs:
         run: |
           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
           git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
+          echo "tut diff:"
           echo $(cat diff.txt)
 
     
