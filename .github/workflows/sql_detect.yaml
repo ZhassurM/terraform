@@ -54,7 +54,7 @@ jobs:
       - name: Check for SQL Keywords
         if: env.DIR_SQL_FOUND == 'true'
         run: |
-          MATCHES=$(git diff -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
+          MATCHES=$(git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
           if [ -n "$MATCHES" ]; then
             echo "❗ Найдены ключевые слова в коде:"
             echo "$MATCHES" > migration.txt
