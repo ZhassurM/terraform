@@ -60,6 +60,7 @@ jobs:
             echo "$MATCHES" > migration.txt
             export SQL_FOUND=true
             echo "SQL_FOUND=true" >> $GITHUB_ENV
+            cat migration.txt
           else
             echo "✅ SQL Keywords not found."
             export SQL_FOUND=false
