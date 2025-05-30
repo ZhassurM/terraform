@@ -1,7 +1,7 @@
 # Workflow searches for “add column”, “drop column” and “drop table” 
 # migrations in the /migrations directory and sends messages to Slack when a match is 
 # found (by default, the migrations directory is “/migrations” and the channel for sending messages is “ddl_alerting”).
-
+# ### git diff --name-only HEAD~1 | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
 on:
   workflow_call:
     # Workflow defaults.
@@ -31,7 +31,7 @@ jobs:
       - name: Fetch all history
         run: |
           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
-          git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
+          git diff --name-only origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
           echo "tut diff:"
           echo $(cat diff.txt) | grep '${{ inputs.migrations_directory }}' > changed_files.txt
           echo $(cat changed_files.txt)
