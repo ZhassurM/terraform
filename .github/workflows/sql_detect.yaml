@@ -1,7 +1,7 @@
 # Workflow searches for “add column”, “drop column” and “drop table” 
 # migrations in the /migrations directory and sends messages to Slack when a match is 
 # found (by default, the migrations directory is “/migrations” and the channel for sending messages is “ddl_alerting”).
-
+# ### git diff --name-only HEAD~1 | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
 on:
   workflow_call:
     # Workflow defaults.
@@ -16,35 +16,32 @@ on:
         type: string
         description: channel id (default #ddl_alerting)
         required: false
-        default: C08R2C0SFAT
+        default: C08U0FXMDAQ
 
 jobs:
   SQL-detect:
-    ### if: github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
     
-      - name: Fetch all history
+      - name: Fetch
         run: |
           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
-          git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
-          echo "tut diff:"
-          echo $(cat diff.txt)
-
+          git diff --name-only origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
-          echo diff.txt | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
+          cat diff.txt | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
           if [ -s changed_files.txt ]; then
-            echo "Найдены изменённые SQL-файлы:"
+            echo "Modified SQL files were found:"
             cat changed_files.txt
             echo "DIR_SQL_FOUND=true" >> $GITHUB_ENV
           else
-            echo "Изменения не найдены в папке ${{ inputs.migrations_directory }}"
+            echo "No changes found in the folder ${{ inputs.migrations_directory }}"
             echo "DIR_SQL_FOUND=false" >> $GITHUB_ENV
             echo SQL_FOUND=false >> $GITHUB_ENV
           fi
@@ -52,12 +49,13 @@ jobs:
       - name: Check for SQL Keywords
         if: env.DIR_SQL_FOUND == 'true'
         run: |
-          MATCHES=$(git diff HEAD~1 -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
+          MATCHES=$(git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
           if [ -n "$MATCHES" ]; then
-            echo "❗ Найдены ключевые слова в коде:"
+            echo "❗ Found keywords in the code:"
             echo "$MATCHES" > migration.txt
             export SQL_FOUND=true
             echo "SQL_FOUND=true" >> $GITHUB_ENV
+            cat migration.txt
           else
             echo "✅ SQL Keywords not found."
             export SQL_FOUND=false
