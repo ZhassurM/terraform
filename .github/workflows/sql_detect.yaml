@@ -37,11 +37,11 @@ jobs:
         run: |
           cat diff.txt | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
           if [ -s changed_files.txt ]; then
-            echo "Найдены изменённые SQL-файлы:"
+            echo "Modified SQL files were found:"
             cat changed_files.txt
             echo "DIR_SQL_FOUND=true" >> $GITHUB_ENV
           else
-            echo "Изменения не найдены в папке ${{ inputs.migrations_directory }}"
+            echo "No changes found in the folder ${{ inputs.migrations_directory }}"
             echo "DIR_SQL_FOUND=false" >> $GITHUB_ENV
             echo SQL_FOUND=false >> $GITHUB_ENV
           fi
@@ -51,7 +51,7 @@ jobs:
         run: |
           MATCHES=$(git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
           if [ -n "$MATCHES" ]; then
-            echo "❗ Найдены ключевые слова в коде:"
+            echo "❗ Found keywords in the code:"
             echo "$MATCHES" > migration.txt
             export SQL_FOUND=true
             echo "SQL_FOUND=true" >> $GITHUB_ENV
