@@ -39,6 +39,7 @@ jobs:
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
+          echo $(cat diff.txt)
           echo $(cat diff.txt) | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
           if [ -s changed_files.txt ]; then
             echo "Найдены изменённые SQL-файлы:"
