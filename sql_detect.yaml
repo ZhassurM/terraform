@@ -1,0 +1,102 @@
+# Workflow searches for “add column”, “drop column” and “drop table” 
+# migrations in the /migrations directory and sends messages to Slack when a match is 
+# found (by default, the migrations directory is “/migrations” and the channel for sending messages is “ddl_alerting”).
+
+on:
+  workflow_call:
+    # Workflow defaults.
+    # Can be overridden in the caller workflow.
+    inputs:
+      migrations_directory:
+        type: string
+        description: Migrations directory
+        required: false
+        default: migrations/
+      migrations_channel_id:
+        type: string
+        description: channel id (default #ddl_alerting)
+        required: false
+        default: C08R2C0SFAT
+
+jobs:
+  SQL-detect:
+    ### if: github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
+    runs-on: ubuntu_latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+    
+      - name: Fetch all history
+        run: |
+          git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
+          git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
+          echo $(cat diff.txt)
+
+    
+      - name: Get changed files in ${{ inputs.migrations_directory }}
+        run: |
+          echo diff.txt | grep '${{ inputs.migrations_directory }}' > changed_files.txt || true
+          if [ -s changed_files.txt ]; then
+            echo "Найдены изменённые SQL-файлы:"
+            cat changed_files.txt
+            echo "DIR_SQL_FOUND=true" >> $GITHUB_ENV
+          else
+            echo "Изменения не найдены в папке ${{ inputs.migrations_directory }}"
+            echo "DIR_SQL_FOUND=false" >> $GITHUB_ENV
+            echo SQL_FOUND=false >> $GITHUB_ENV
+          fi
+    
+      - name: Check for SQL Keywords
+        if: env.DIR_SQL_FOUND == 'true'
+        run: |
+          MATCHES=$(git diff HEAD~1 -- $(cat changed_files.txt) | grep -iE 'add column|drop column|drop table' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "❗ Найдены ключевые слова в коде:"
+            echo "$MATCHES" > migration.txt
+            export SQL_FOUND=true
+            echo "SQL_FOUND=true" >> $GITHUB_ENV
+          else
+            echo "✅ SQL Keywords not found."
+            export SQL_FOUND=false
+          fi
+
+      - name: Get Upload URL
+        if: env.SQL_FOUND == 'true'
+        id: get_upload_url
+        env:
+          BOT_TOKEN: ${{ secrets.SLACK_TOKEN_AWF_NOTIFICATION }}
+        run: |
+          length=$(wc -c < migration.txt)
+          response=$(curl \
+            -H "Authorization: Bearer ${BOT_TOKEN}" \
+            -H "Content-Type: application/x-www-form-urlencoded; charset=utf-8" \
+            -d "filename=migration.txt" \
+            -d "length=$length" \
+            https://slack.com/api/files.getUploadURLExternal)
+          echo $response
+          upload_url=$(echo "$response" | jq -r '.upload_url')
+          file_id=$(echo "$response" | jq -r '.file_id') 
+          echo "upload_url=$upload_url" >> $GITHUB_OUTPUT
+          echo "file_id=$file_id" >> $GITHUB_OUTPUT
+      
+      - name: Upload file
+        if: env.SQL_FOUND == 'true'
+        env:
+          URL: ${{ steps.get_upload_url.outputs.upload_url }}
+          ID: ${{ steps.get_upload_url.outputs.file_id }}
+          BOT_TOKEN: ${{ secrets.SLACK_TOKEN_AWF_NOTIFICATION }}
+        run: |
+          MESSAGE=":mysql: *Migration:* ${{ github.event.pull_request.title }}
+            :open_file_folder: *Repository:* $GITHUB_REPOSITORY
+            :mag: *Commit:* <http://www.github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA| *${GITHUB_SHA::7}*>
+            :bust_in_silhouette: *Author:* ${{ github.actor }}"
+          echo ${URL}
+          echo ${ID}
+          curl -F filename="@migration.txt" ${URL}
+          curl -F "files=[{'id':'${ID}', 'title':'migrations'}]" \
+            -F channel_id="${{ inputs.migrations_channel_id }}" -F token="${BOT_TOKENW}" \
+            -F initial_comment="${MESSAGE}"  \
+            https://slack.com/api/files.completeUploadExternal
+          

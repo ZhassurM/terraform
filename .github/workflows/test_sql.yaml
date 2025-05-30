@@ -1,0 +1,31 @@
+name: test_sql_detect
+
+on:
+  # Run in merge queue
+  # https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue
+  merge_group:
+    types: [checks_requested]
+
+  # Run on direct push to `main` branch
+  # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushbranchestagsbranches-ignoretags-ignore
+  push:
+    branches:
+      - main
+
+  # Allow manual run on any branch
+  # https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow
+  workflow_dispatch:
+
+  # Run in every pull request
+  # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    secrets: inherit
+    uses: ./.github/workflows/sql_detect.yaml
+    with:
+      migrations_directory: migrations/
