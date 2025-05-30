@@ -35,7 +35,7 @@ jobs:
           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
           git diff --name-only origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
           ls
-
+          cat diff.txt
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
