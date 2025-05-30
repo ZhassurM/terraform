@@ -32,6 +32,7 @@ jobs:
         run: |
           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
           git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} --unified=0 > diff.txt
+          echo "tut diff:"
           echo $(cat diff.txt)
 
     
