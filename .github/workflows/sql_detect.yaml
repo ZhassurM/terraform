@@ -98,7 +98,7 @@ jobs:
           echo ${ID}
           curl -F filename="@migration.txt" ${URL}
           curl -F "files=[{'id':'${ID}', 'title':'migrations'}]" \
-            -F channel_id="${{ inputs.migrations_channel_id }}" -F token="${BOT_TOKENW}" \
+            -F channel_id="${{ inputs.migrations_channel_id }}" -F token="${BOT_TOKEN}" \
             -F initial_comment="${MESSAGE}"  \
             https://slack.com/api/files.completeUploadExternal
           
