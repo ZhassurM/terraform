@@ -34,6 +34,8 @@ jobs:
           echo ${{github.ref}}
           git fetch origin main
           git diff --name-only HEAD~1 > changed_files.txt
+          cat changed_files.txt
+          #git diff --name-only HEAD~1 > changed_files.txt
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
