@@ -35,7 +35,6 @@ jobs:
           git fetch origin main
           git diff --name-only HEAD~1 > changed_files.txt
           cat changed_files.txt
-          #git diff --name-only HEAD~1 > changed_files.txt
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
@@ -53,7 +52,7 @@ jobs:
       - name: Check for SQL Keywords
         if: env.DIR_SQL_FOUND == 'true'
         run: |
-          MATCHES=$(git diff origin/${GITHUB_BASE_REF}..origin/${GITHUB_HEAD_REF} -- $(cat files_with_migration.txt) | grep -iE 'add column|drop column|drop table' || true)
+          MATCHES=$(git diff HEAD~1 -- $(cat files_with_migration.txt) | grep -iE 'add column|drop column|drop table' || true)
           if [ -n "$MATCHES" ]; then
             echo "❗ Found keywords in the code:"
             echo "$MATCHES" > migration.txt

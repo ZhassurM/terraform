@@ -1,0 +1,7 @@
+ALTER TABLE tbl_chat_roles7
+frnufrufrh
+frfrfrfr
+INSERT TABLE tbl_chat_roles7
+грагкраоркиоарки
+dnejhbdjehb
+jberjfcbenmnbemrnbcfemnb
