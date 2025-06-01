@@ -1,0 +1,4 @@
+ALTER TABLE tbl_chat_roles12333
+INSERT TABLE tbl_chat_roles1llll333
+ddd
+INSERT TABLE tbl_chat_roles7rdrdrnejdk3nkedjn3kdjen3
