@@ -33,7 +33,7 @@ jobs:
           echo ${{github.event.repository.default_branch}}
           echo ${{github.ref}}
           git fetch origin main
-          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > changed_files.txt
+          git diff --name-only ${{ github.event.repository.default_branch }} ${{ github.ref }} > changed_files.txt
     
       - name: Get changed files in ${{ inputs.migrations_directory }}
         run: |
